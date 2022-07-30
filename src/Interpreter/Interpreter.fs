@@ -5,16 +5,26 @@
     type Program = Instruction list
     type MachineCode = int list // essentially a flattened version of `Program`
 
+    // memory-mapped io abstraction
+    type IOHandler = int -> int -> unit
+
     // an instance of a running program
     type Machine = {
         memory: int array
         instruction: int
         halted: bool
+        io: IOHandler
     }
+
+    let io location value   = 
+        match location with
+        | 1 -> printf "%c" (char value)
+        | _ -> ()
+
 
     module Machine =
         // constructor
-        let initialize (code: MachineCode) = { memory = Array.ofList code; instruction = 0; halted = false }
+        let initialize io (code: MachineCode) = { memory = Array.ofList code; instruction = 0; halted = false; io = io }
 
         // io operations
         let inline read sys location = if location >= 0 then sys.memory[location] else 0
@@ -30,7 +40,7 @@
 
                 // write new value (or print if b < 0)
                 if b < 0
-                then printf "%c" (char _a)
+                then sys.io -b _a
                 else write sys b (read sys b - _a)
 
                 // jump if <= 0 else go to next instruction
@@ -53,7 +63,7 @@
     let run (program: Program) =
         // printfn "Loading machine..."
         let code = compile program
-        let sys = Machine.initialize code
+        let sys = Machine.initialize io code
         
         // printfn "Running code...\n"
         Machine.run sys
