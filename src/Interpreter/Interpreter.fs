@@ -55,13 +55,9 @@
                 step sys
                 |> run
 
+    let compile (program: Program) : MachineCode = List.collect (fun (a, b, c) -> [ a; b; c ]) program
 
-    let flatten ((a, b, c): Instruction) : MachineCode = [ a; b; c ]
-
-    let compile (program: Program) : MachineCode = List.collect flatten program
-
-    let run (program: Program) = 
+    let run (program: MachineCode) = 
         program
-        |> compile
         |> Machine.initialize io
         |> Machine.run

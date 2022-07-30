@@ -21,4 +21,6 @@ let program = [
     (33, 10, 53)
 ]
 
-run program
+program
+|> compile
+|> run
