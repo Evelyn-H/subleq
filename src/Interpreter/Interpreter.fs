@@ -60,10 +60,8 @@
 
     let compile (program: Program) : MachineCode = List.collect flatten program
 
-    let run (program: Program) =
-        // printfn "Loading machine..."
-        let code = compile program
-        let sys = Machine.initialize io code
-        
-        // printfn "Running code...\n"
-        Machine.run sys
+    let run (program: Program) = 
+        program
+        |> compile
+        |> Machine.initialize io
+        |> Machine.run
