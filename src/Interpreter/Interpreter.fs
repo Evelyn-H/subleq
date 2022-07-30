@@ -8,6 +8,12 @@
     // memory-mapped io abstraction
     type IOHandler = int -> int -> unit
 
+    // default io handler
+    let io location value   = 
+        match location with
+        | 1 -> printf "%c" (char value)
+        | _ -> ()
+
     // an instance of a running program
     type Machine = {
         memory: int array
@@ -15,12 +21,6 @@
         halted: bool
         io: IOHandler
     }
-
-    let io location value   = 
-        match location with
-        | 1 -> printf "%c" (char value)
-        | _ -> ()
-
 
     module Machine =
         // constructor
