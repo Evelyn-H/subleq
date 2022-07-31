@@ -16,9 +16,9 @@ let io location value   =
 
 // an instance of a running program
 type Machine = {
-    memory: int array
-    instruction: int
-    halted: bool
+    mutable memory: int array
+    mutable instruction: int
+    mutable halted: bool
     io: IOHandler
 }
 
@@ -33,31 +33,23 @@ module Machine =
 
     // run one instruction
     let step sys = 
-        if sys.instruction < 0 then { sys with halted = true } 
+        if sys.instruction < 0 then sys.halted <- true
         else
             let a, b, c = read3 sys sys.instruction
-            let _a = read sys a // value stored at memory[a]
 
             // write new value (or print if b < 0)
             if b < 0
-            then sys.io -b _a
-            else write sys b (read sys b - _a)
+            then sys.io -b (read sys a)
+            else write sys b (read sys b - read sys a)
 
             // jump if <= 0 else go to next instruction
-            if read sys b <= 0 
-            then { sys with instruction = c }
-            else { sys with instruction = sys.instruction + 3 }
+            sys.instruction <- if read sys b <= 0 then c else sys.instruction + 3
 
     // run machine until it halts
     let rec run sys =
-        if sys.halted then ()
-        else 
+        while not sys.halted do
             step sys
-            |> run
 
 let compile (program: Program) : MachineCode = List.collect (fun (a, b, c) -> [ a; b; c ]) program
 
-let run (program: MachineCode) = 
-    program
-    |> Machine.initialize io
-    |> Machine.run
+let run = Machine.initialize io >> Machine.run
