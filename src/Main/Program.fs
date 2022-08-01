@@ -1,5 +1,6 @@
 ﻿open Argu
 open Interpreter
+open Assembler
 
 let program = [
     (12, 12, 3)
@@ -33,35 +34,47 @@ let run (path: string) =
 let compile (path: string) =
     ()
 
+let assemble (path: string) =
+    match Parser.parseFile path with
+    | Ok instructions -> printfn "%s" (string instructions)
+    | Error e -> printfn "Error:\n%s" (string e)
+
+
 type Args = 
-    | [<Unique; CliPrefix(CliPrefix.None)>] Run of path: string
-    | [<Unique; First; CliPrefix(CliPrefix.None)>] Compile of path: string
-    | [<Unique>] Hello
+    | [<Unique; First; CliPrefix(CliPrefix.None); AltCommandLine("-r")>] Run of path: string
+    | [<Unique; First; CliPrefix(CliPrefix.None); AltCommandLine("-c")>] Compile of path: string
+    | [<Unique; First; CliPrefix(CliPrefix.None); AltCommandLine("-a")>] Assemble of path: string
+    | [<Unique; First>] Hello
 
     interface IArgParserTemplate with
         member this.Usage =
             match this with
             | Run _ -> "specify a file"
             | Compile _ -> "specify a file"
+            | Assemble _ -> "specify a file"
             | Hello -> "run a hello world program"
 
 
 [<EntryPoint>]
 let main args =
     let parser = ArgumentParser.Create<Args>(programName = "subleq")
-    
-    try
-        let results = (parser.ParseCommandLine args).GetAllResults()
-        if results.Length = 0 
-        then printfn "%s" (parser.PrintUsage())
-        else
-            results
-            |> List.iter (fun r ->
-                match r with
-                | Run path -> run path
-                | Compile path -> compile path
-                | Hello -> hello ())
-    with e ->
-        printfn "%s" e.Message
+
+    let results = 
+        try 
+            (parser.ParseCommandLine args).GetAllResults()
+        with e ->
+            printfn "%s" e.Message
+            []
+
+    let handle arg = 
+        match arg with
+        | Run path -> run path
+        | Compile path -> compile path
+        | Assemble path -> printfn "%s" (string (assemble path))
+        | Hello -> hello ()
+
+    match results with
+    | [] -> printfn "%s" (parser.PrintUsage())
+    | args -> List.iter handle args
 
     0
