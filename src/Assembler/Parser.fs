@@ -1,23 +1,11 @@
 module Parser
     open Farkle
     open Farkle.Builder
+    open Types
 
     // aka: curry and uncurry
     let pack f a b = f (a,b)
     let unpack f (a, b) = f a b
-
-    type Operand = 
-        // absolute addresses
-        | Address of int
-        | NamedAddress of string * int
-        | Reference of string
-        // relative addresses (relative to the current instruction)
-        | Offset of int
-        | Current
-        | Next
-
-    type Instruction = 
-        | Subleq of Operand * Operand * Operand
 
     module Grammar =
         let number = Terminals.int "number"
@@ -37,9 +25,9 @@ module Parser
         ]
 
         let subleq = "subleq" ||= [
-            !@ operand .>>. operand .>>. operand => (fun a b c -> Subleq(a, b, c))
-            !@ operand .>>. operand              => (fun a b -> Subleq(a, b, Next))
-            !@ operand                           => (fun a -> Subleq(a, a, Next))
+            !@ operand .>>. operand .>>. operand => (fun a b c -> Instruction(a, b, c))
+            !@ operand .>>. operand              => (fun a b -> Instruction(a, b, Next))
+            !@ operand                           => (fun a -> Instruction(a, a, Next))
         ]
 
         let instruction = "instruction" ||= [

@@ -1,6 +1,4 @@
 ﻿open Argu
-open Interpreter
-open Assembler
 
 let program = [
     (12, 12, 3)
@@ -25,8 +23,8 @@ let program = [
 
 let hello () = 
     program
-    |> compile
-    |> run
+    |> Interpreter.compile
+    |> Interpreter.run
 
 let run (path: string) =
     ()
@@ -35,7 +33,7 @@ let compile (path: string) =
     ()
 
 let assemble (path: string) =
-    match Parser.parseFile path with
+    match Assembler.assembleFile path with
     | Ok instructions -> printfn "%s" (string instructions)
     | Error e -> printfn "Error:\n%s" (string e)
 
