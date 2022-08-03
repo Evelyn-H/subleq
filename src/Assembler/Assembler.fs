@@ -1,17 +1,12 @@
 ﻿module Assembler
     open Types
 
-    // little helper to make it easier to conditionally transform things
-    let maybeReplace mapping original = 
-        match mapping original with
-        | Some s -> s
-        | None -> original
-
     module List =
         let foldBack f s input = List.foldBack f input s
-        let maybeMap mapping = List.map (maybeReplace mapping)
+        let maybeMap mapping = List.map (fun o -> Option.defaultValue o (mapping o))
 
     let tee f x = f x; x
+
 
     let rec absolutifyOperand current op =
         match op with
@@ -24,27 +19,23 @@
             | Reference l -> Reference l
 
     // i need a better name...
-    let rec absolutify out op = absolutifyOperand (List.length out) op :: out
+    let absolutify out op = absolutifyOperand (List.length out) op :: out
         
 
     // replace all labels with concrete addresses
     let concretise instructions =
-        let add labels (i, op) =
-            match op with 
-                | Named (l, op) -> Map.add l i labels
-                | _ -> labels 
-
+        // find all labels
         let labels = 
             instructions 
-            // make (address, operand) tuples
-            |> List.mapi (fun i op -> (i, op))
+            |> List.indexed
             // turn all Named operands into name * address tuples
             |> List.choose (fun (i, op) -> match op with | Named (l, op) -> Some (l, i) | _ -> None)
             |> Map.ofList
             |> tee (printfn "%A")
 
+
         instructions
-        // get rid of labels
+        // get rid of labels in code
         |> List.maybeMap (fun op -> 
             match op with
             | Named (l, op) -> Some op
@@ -62,7 +53,9 @@
 
     let assemble (instructions: Instruction list) = 
         instructions
+        // unpack instructions into a flat list of operands
         |> List.foldBack (fun (a, b, c) out -> (a :: b :: c :: out)) []
+        // replace all relative addresses with absolute addresses
         |> List.fold absolutify [] |> List.rev
         |> concretise
         // |> List.map (tee (string >> printfn "%s"))
