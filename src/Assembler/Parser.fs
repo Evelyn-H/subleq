@@ -2,26 +2,28 @@ module Parser
     open Farkle
     open Farkle.Builder
     open Types
-
-    // aka: curry and uncurry
-    let pack f a b = f (a,b)
-    let unpack f (a, b) = f a b
+    
 
     module Grammar =
+        let setProductions (nonterminal: Nonterminal<'a>) productions =
+            let p = Array.ofList productions
+            nonterminal.SetProductions(p[0], p[1..])
+
         let number = Terminals.int "number"
 
         let label = 
             Regex.regexString @"( \p{AllLetters} | _ ) ( \p{AllLetters} | \d |_ )*" 
             |> terminal "label" (T(fun _ x -> x.ToString()))
 
-        let operand = "operand" ||= [
-            !@ number                    => Address
-            !@ label .>> ":" .>>. number => pack NamedAddress
-            !@ label                     => Reference
-            !& "?+" .>>. number          => Offset
-            !& "?-" .>>. number          => ((~-) >> Offset)
-            !& "?"                       =% Current
-            !& ">"                       =% Next
+        let operand = nonterminal "operand" 
+        setProductions operand [
+            !@ number                     => Address
+            !@ label .>> ":" .>>. operand => (fun l op -> Named (l, op))
+            !@ label                      => Reference
+            !& "?+" .>>. number           => Offset
+            !& "?-" .>>. number           => ((~-) >> Offset)
+            !& "?"                        =% Current
+            !& ">"                        =% Next
         ]
 
         let subleq = "subleq" ||= [

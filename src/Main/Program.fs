@@ -34,7 +34,7 @@ let compile (path: string) =
 
 let assemble (path: string) =
     match Assembler.assembleFile path with
-    | Ok instructions -> printfn "%s" (string instructions)
+    | Ok instructions -> printfn "Final code: %A" instructions
     | Error e -> printfn "Error:\n%s" (string e)
 
 

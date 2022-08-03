@@ -3,8 +3,9 @@ module Types
     type Operand = 
         // absolute
         | Address of int
-        | NamedAddress of string * int
+        | Named of string * Operand
         | Reference of string
+        
         // relative
         | Offset of int
         | Current
