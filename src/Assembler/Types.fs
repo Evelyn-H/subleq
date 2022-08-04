@@ -11,4 +11,7 @@ module Types
         | Current
         | Next
 
+        // macro stuff
+        | MacroDefinition of 
+
     type Instruction = Operand * Operand * Operand
