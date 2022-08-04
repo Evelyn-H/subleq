@@ -1,0 +1,112 @@
+-- okay, this is beautiful and really elegant:
+-- for the compiled subleq code we need some registers and static data and registers and such
+-- so, we could just put that all a the start of the "executable" file
+-- problem there is that execution starts at the start of the file...
+-- so ideally the first 3 values would be a jump instruction that jumps past the data block
+-- and then we can have the actual code after the data block
+-- the beautiful part of this: 
+--   - we need a zero register somewhere (just a memory address that contains 0)
+--   - ideally that'd be at address 0
+--   - we want an unconditional jump at the start
+--   - `jmp address` is just `subleq zero zero address`  (where `zero` is the zero register)
+-- so! if the first value has a value of zero and we also use it as the zero register
+-- it actually ends up working out perfectly so we can easily encode our jump on top of this
+-- additionally, this also means that the start of our executable files will be two zeros, 
+-- followed by the length of the data block, (since we're jumping to the end of it)
+-- which I think is kinda neat, cause it works nicely as an imprompty header format
+-- could even extend the header with any data we want there, since it's all part of the data block!
+-- we should also ensure that the constant for 0 is stored at 0
+-- (as in: when you put #0 in the code it'll just be a 0 in the final code, since the value of 0 is stored at address zero :p)
+-- not that this matters too much, but I think it's kinda neat
+-- could be cool to have the zero byte (or whatever the word width is) be a special case in hardware on the cpu
+-- maybe to prevent it from being written to or and it's just kinda neat ^^
+
+-- data layout for the final "executable":
+--
+-- +------------------------+
+-- |                        |
+-- |  0   0  code           |
+-- |                        |
+-- |  < registers >         |
+-- |                        |
+-- |  < stack >             |
+-- |                        |
+-- |  < constants >         |
+-- |                        |
+-- |  < user data >         |
+-- |                        |
+-- |  code:                 |
+-- |                        |
+-- |    < vm entry point >  |
+-- |                        |
+-- |    < vm code >         |
+-- |                        |
+-- |    < vm routines >     |
+-- |                        |
+-- |    < user routines >   |
+-- |                        |
+-- |    < thread >          |
+-- |                        |
+-- +------------------------+
+
+
+-- it might be a good idea to have some sort of syntax for denothing all these internal keywords
+-- to separate them from user-defined names, but it'd be nice for user code to still use them if they
+-- *really* want to, but this way at least it won't happen by accident
+-- this file should be handled separately by the compiler, 
+-- and any identifiers defined here should only be accessible with a ! prefix
+-- e.g. !sp or !r4
+-- (question: would this also apply to the instructions defined in here? cause that might get noisy syntax-wise)
+
+-- initial jump past the data segment
+zero: 0 0 code
+
+-- registers
+sp: stack
+ip: ??
+z: 0 -- by convention this is only used by the "core" routines and should be guaranteed to be 0 at the end of every routine
+
+// it'd be nice if these registers lined up with a nice memory boundary so they look pretty in hex / binary
+// also makes them more easily recognizable when looking at raw code (if you'd ever want to do that)
+r0: 0 
+r1: 0
+r2: 0
+r3: 0
+r4: 0
+-- ... and more probably
+
+-- every argument is a single Operand that gets copied wherever the arg is used in the macro body
+
+-- [b] = [b] + [a]
+.: add a b [
+    a r0
+    r0 b
+    r0 r0
+]
+
+.: inc n [
+    #-1 n
+]
+
+.: dec n [
+    #1 n
+]
+
+.: jump addr [
+    #0 #0 addr
+]
+
+-- copy value at src to dst
+.: copy src dst [
+    dst dst
+    .add src dst
+]
+
+.: jge a addr [
+    a r0 gte
+    .jump done
+    gte: r0 r0 addr
+    done: r0 r0
+]
+
+code:
