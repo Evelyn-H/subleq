@@ -15,6 +15,9 @@ let io location value   =
     | _ -> ()
 
 // an instance of a running program
+// using this much mutability is a poor example of functional programming,
+// but it does showcase how easy it is to write imperative code with mutable state
+// and in this case it's implemented this way for performance reasons
 type Machine = {
     mutable memory: int array
     mutable instruction: int

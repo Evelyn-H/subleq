@@ -33,7 +33,6 @@
             |> Map.ofList
             |> tee (printfn "%A")
 
-
         instructions
         // get rid of labels in code
         |> List.maybeMap (fun op -> 
@@ -45,6 +44,7 @@
             match op with
             | Reference l -> Some (Address (Map.find l labels))
             | _ -> None)
+
 
     let getOpcode op = 
         match op with
