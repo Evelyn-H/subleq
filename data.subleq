@@ -63,11 +63,12 @@ zero: 0 0 code
 
 -- registers
 sp: stack
-ip: ??
+ip: 0
+
 z: 0 -- by convention this is only used by the "core" routines and should be guaranteed to be 0 at the end of every routine
 
-// it'd be nice if these registers lined up with a nice memory boundary so they look pretty in hex / binary
-// also makes them more easily recognizable when looking at raw code (if you'd ever want to do that)
+-- it'd be nice if these registers lined up with a nice memory boundary so they look pretty in hex / binary
+-- also makes them more easily recognizable when looking at raw code (if you'd ever want to do that)
 r0: 0 
 r1: 0
 r2: 0
@@ -79,9 +80,9 @@ r4: 0
 
 -- [b] = [b] + [a]
 .: add a b [
-    a r0
-    r0 b
-    r0 r0
+    a z
+    z b
+    z z
 ]
 
 .: inc n [
@@ -93,7 +94,7 @@ r4: 0
 ]
 
 .: jump addr [
-    #0 #0 addr
+    z z addr
 ]
 
 -- copy value at src to dst
@@ -103,10 +104,11 @@ r4: 0
 ]
 
 .: jge a addr [
-    a r0 gte
+    a z gte
     .jump done
-    gte: r0 r0 addr
-    done: r0 r0
+    gte: z z addr
+    done: z z
 ]
 
-code:
+code: 
+0 0 -1

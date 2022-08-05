@@ -8,6 +8,8 @@
     let tee f x = f x; x
 
 
+    // when implementing constants: remember to add a check to disallow constants to be written to
+
     let rec absolutifyOperand current op =
         match op with
             | Current -> Address current
@@ -51,10 +53,15 @@
         | Address a -> a
         | _ -> invalidArg "operand" $"can't convert {string op} to a raw opcode"
 
+    let flatten op out = 
+        match op with
+        | Subleq (a, b, c) -> a :: b :: c :: out
+        | _ -> invalidArg "operand" $"Can't flatten this instruction: {string op}"
+
     let assemble (instructions: Instruction list) = 
         instructions
         // unpack instructions into a flat list of operands
-        |> List.foldBack (fun (a, b, c) out -> (a :: b :: c :: out)) []
+        |> List.foldBack flatten []
         // replace all relative addresses with absolute addresses
         |> List.fold absolutify [] |> List.rev
         |> concretise
